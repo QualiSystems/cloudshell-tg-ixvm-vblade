@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DataModelInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns="http://schemas.qualisystems.com/ResourceManagement/DataModelSchema.xsd">
+    <Attributes>
+        <AttributeInfo Name="Logical Name" Type="String" DefaultValue="" IsReadOnly="false"
+                       Description="The port's logical name in the test configuration. If kept emtpy automatic allocation will apply.">
+            <Rules Override="false">
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
+        <AttributeInfo Name="MAC Address" Type="String" DefaultValue="" IsReadOnly="true">
+            <Rules Override="false">
+                <Rule Name="Setting"/>
+                <Rule Name="Available For Abstract Resources"/>
+            </Rules>
+        </AttributeInfo>
+        <AttributeInfo Name="Requested vNIC Name" Type="String" DefaultValue="" IsReadOnly="false">
+            <Rules Override="false">
+                <Rule Name="Setting"/>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
+        <AttributeInfo DefaultValue="" IsReadOnly="false" Name="User" Type="String">
+            <Rules>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
+        <AttributeInfo DefaultValue="3M3u7nkDzxWb0aJ/IZYeWw==" IsReadOnly="false" Name="Password" Type="Password">
+            <Rules>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
+    </Attributes>
+    <ResourceFamilies>
+            <ResourceFamily Description="" IsConnectable="false" IsLockedByDefault="true" IsSearchable="true"
+                            Name="Virtual Traffic Generator Chassis" ResourceType="Application">
+            <AttachedAttributes>
+                <AttachedAttribute IsLocal="true" IsOverridable="true" Name="User">
+                    <AllowedValues/>
+                </AttachedAttribute>
+                <AttachedAttribute IsLocal="true" IsOverridable="true" Name="Password">
+                    <AllowedValues/>
+                </AttachedAttribute>
+            </AttachedAttributes>
+            <AttributeValues>
+                <AttributeValue Name="User" Value=""/>
+                <AttributeValue Name="Password" Value=""/>
+            </AttributeValues>
+            <Models>
+                <ResourceModel Description="" Name="IxVM Chassis" SupportsConcurrentCommands="false">
+                    <AttachedAttributes>
+                    </AttachedAttributes>
+                    <AttributeValues>
+                    </AttributeValues>
+                    <ParentModels/>
+                    <Drivers>
+                        <DriverName>IxVMVchassisDriver</DriverName>
+                    </Drivers>
+                    <Scripts/>
+                </ResourceModel>
+            </Models>
+        </ResourceFamily>
+        <ResourceFamily Name="Module" IsConnectable="false" IsLockedByDefault="true"
+                        Description="" IsSearchable="true">
+            <Models>
+                <ResourceModel Name="IxVM Virtual Traffic Generator Module" Description=""
+                               SupportsConcurrentCommands="false">
+                    <AttachedAttributes/>
+                    <AttributeValues/>
+                    <ParentModels/>
+                </ResourceModel>
+            </Models>
+        </ResourceFamily>
+        <ResourceFamily Name="Port" IsSearchable="true" IsConnectable="true" IsLockedByDefault="true">
+            <AttachedAttributes/>
+            <AttributeValues/>
+            <Models>
+                <ResourceModel Name="IxVM Virtual Traffic Generator Port" Description="" SupportsConcurrentCommands="false">
+                    <AttachedAttributes>
+                        <AttachedAttribute Name="Logical Name" IsOverridable="true" IsLocal="true">
+                            <AllowedValues/>
+                        </AttachedAttribute>
+                        <AttachedAttribute Name="MAC Address" IsOverridable="true" IsLocal="true">
+                            <AllowedValues/>
+                        </AttachedAttribute>
+                        <AttachedAttribute Name="Requested vNIC Name" IsOverridable="true" IsLocal="true">
+                            <AllowedValues/>
+                        </AttachedAttribute>
+                    </AttachedAttributes>
+                    <AttributeValues>
+                        <AttributeValue Name="Logical Name" Value=""/>
+                        <AttributeValue Name="Requested vNIC Name" Value=""/>
+                        <AttributeValue Name="MAC Address" Value=""/>
+                    </AttributeValues>
+                    <ParentModels>
+                        <ParentModelName>IxVM Virtual Traffic Generator Module</ParentModelName>
+                    </ParentModels>
+                    <Drivers/>
+                    <Scripts/>
+                </ResourceModel>
+            </Models>
+            <Categories/>
+        </ResourceFamily>
+    </ResourceFamilies>
+    <DriverDescriptors>
+        <DriverDescriptor Name="IxVMVchassisDriver" DriverType="PythonDriver"/>
+    </DriverDescriptors>
+</DataModelInfo>
