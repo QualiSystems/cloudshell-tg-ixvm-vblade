@@ -1,5 +1,8 @@
+from datetime import datetime
+from datetime import timedelta
 import copy
 import json
+import time
 
 from cloudshell.api.cloudshell_api import SetConnectorRequest
 from cloudshell.core.context.error_handling_context import ErrorHandlingContext
@@ -14,6 +17,7 @@ from traffic.ixvm.vchassis.client import IxVMChassisHTTPClient
 from traffic.ixvm.vchassis.autoload import models
 
 
+SERVICE_STARTING_TIMEOUT = 60 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
 MODEL_PORT = "IxVM Virtual Traffic Generator Port"
@@ -43,6 +47,23 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             if attribute.Name == attribute_name:
                 return attribute.Value
 
+    @staticmethod
+    def _wait_for_service_deployment(api_client, logger):
+        """
+        :param api_client:
+        :param logger:
+        :return:
+        """
+        timeout_time = datetime.now() + timedelta(seconds=SERVICE_STARTING_TIMEOUT)
+
+        while not api_client.check_if_service_is_deployed(logger):
+            logger.info("Waiting for controller service start...")
+
+            if datetime.now() > timeout_time:
+                raise Exception("TeraVM Controller service didn't start within {} minute(s)"
+                                .format(SERVICE_STARTING_TIMEOUT / 60))
+            time.sleep(10)
+
     def get_inventory(self, context):
         """Discovers the resource structure and attributes.
 
@@ -70,9 +91,9 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                                                user="admin",
                                                password="admin")  # todo: decrypt password !!!!!
 
+            self._wait_for_service_deployment(api_client, logger)
 
             api_client.login()
-
 
             # todo: clarify if there always will be only one chassis
             chassis_data = api_client.get_chassis()[0]

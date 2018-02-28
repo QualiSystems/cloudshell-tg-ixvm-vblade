@@ -106,7 +106,15 @@ class IxVMChassisHTTPClient(object):
 
         return resp
 
-    def get_chassis_structure(self):
-        # todo: clarify if there might be case when there wil be several chassis
-        modules = self.get_cards()
+    def check_if_service_is_deployed(self, logger):
+        """
+        :return:
+        """
+        ""
+        try:
+            resp = self._do_get(path="platform", raise_for_status=False)
+        except requests.exceptions.ConnectionError:
+            return False
+
+        return resp.status_code == httplib.OK
 
