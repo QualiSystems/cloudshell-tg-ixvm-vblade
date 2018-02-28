@@ -6,6 +6,7 @@ from cloudshell.core.context.error_handling_context import ErrorHandlingContext
 from cloudshell.devices.driver_helper import get_api
 from cloudshell.devices.autoload.autoload_builder import AutoloadDetailsBuilder
 from cloudshell.devices.driver_helper import get_logger_with_thread_id
+from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
 
 from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
@@ -53,22 +54,26 @@ class IxVMVchassisDriver(ResourceDriverInterface):
         logger.info("Autoload")
 
         with ErrorHandlingContext(logger):
-            # cs_api = get_api(context)
-
-            # todo: rework it with the chassis
 
             vchassis_resource = TrafficGeneratorVChassisResource.from_context(context)
+
+            if not vchassis_resource.address or vchassis_resource.address.upper() == "NA":
+                return AutoLoadDetails([], [])
+
+            # cs_api = get_api(context)
 
             # api_client = IxVMChassisHTTPClient(address=vchassis_resource.address,
             #                                    user=vchassis_resource.user,
             #                                    password=vchassis_resource.password)  # todo: decrypt password !!!!!
 
-
             api_client = IxVMChassisHTTPClient(address=vchassis_resource.address,
                                                user="admin",
                                                password="admin")  # todo: decrypt password !!!!!
 
+
             api_client.login()
+
+
             # todo: clarify if there always will be only one chassis
             chassis_data = api_client.get_chassis()[0]
             chassis_id = chassis_data["id"]
@@ -230,7 +235,7 @@ if __name__ == "__main__":
     import mock
     from cloudshell.shell.core.context import ResourceCommandContext, ResourceContextDetails, ReservationContextDetails
 
-    address = '192.168.42.169'
+    address = '192.168.42.191'
 
     user = 'admin'
     password = 'admin'
