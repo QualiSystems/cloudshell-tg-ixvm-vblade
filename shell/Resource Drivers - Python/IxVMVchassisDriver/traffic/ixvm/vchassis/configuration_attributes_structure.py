@@ -37,6 +37,14 @@ class TrafficGeneratorVChassisResource(object):
         """
         return self.attributes.get("{}Password".format(self.namespace_prefix), None)
 
+    @property
+    def license_server(self):
+        """
+
+        :rtype: string
+        """
+        return self.attributes.get("{}License Server".format(self.namespace_prefix), None)
+
     @classmethod
     def from_context(cls, context, shell_name=None):
         """Create an instance of TrafficGeneratorVBladeResource from the given context

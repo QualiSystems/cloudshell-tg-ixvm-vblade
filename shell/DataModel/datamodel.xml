@@ -30,6 +30,11 @@
                 <Rule Name="Configuration"/>
             </Rules>
         </AttributeInfo>
+        <AttributeInfo DefaultValue="" IsCommand="false" IsReadOnly="false" Name="License Server" Type="String">
+            <Rules>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
     </Attributes>
     <ResourceFamilies>
             <ResourceFamily Description="" IsConnectable="false" IsLockedByDefault="true" IsSearchable="true"
@@ -49,8 +54,12 @@
             <Models>
                 <ResourceModel Description="" Name="IxVM Chassis" SupportsConcurrentCommands="false">
                     <AttachedAttributes>
+                        <AttachedAttribute IsLocal="true" IsOverridable="true" Name="License Server">
+                            <AllowedValues/>
+                        </AttachedAttribute>
                     </AttachedAttributes>
                     <AttributeValues>
+                        <AttributeValue Name="License Server" Value=""/>
                     </AttributeValues>
                     <ParentModels/>
                     <Drivers>

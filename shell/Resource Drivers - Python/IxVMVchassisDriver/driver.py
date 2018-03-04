@@ -1,22 +1,24 @@
-from datetime import datetime
-from datetime import timedelta
 import copy
 import json
 import time
+from datetime import datetime
+from datetime import timedelta
 
 from cloudshell.api.cloudshell_api import SetConnectorRequest
 from cloudshell.core.context.error_handling_context import ErrorHandlingContext
-from cloudshell.devices.driver_helper import get_api
 from cloudshell.devices.autoload.autoload_builder import AutoloadDetailsBuilder
+from cloudshell.devices.driver_helper import get_api
+from cloudshell.devices.driver_helper import get_cli
 from cloudshell.devices.driver_helper import get_logger_with_thread_id
 from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
 
-from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
-from traffic.ixvm.vchassis.client import IxVMChassisHTTPClient
+from traffic.ixvm.vchassis.api.client import IxVMChassisHTTPClient
 from traffic.ixvm.vchassis.autoload import models
+from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
+from traffic.ixvm.vchassis.runners.configuration_runner import IxVMConfigurationRunner
 
-
+SSH_SESSION_POOL = 1
 SERVICE_STARTING_TIMEOUT = 60 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
@@ -26,7 +28,7 @@ MODEL_PORT = "IxVM Virtual Traffic Generator Port"
 class IxVMVchassisDriver(ResourceDriverInterface):
     def __init__(self):
         """Constructor must be without arguments, it is created with reflection at run time"""
-        pass
+        self._cli = None
 
     def initialize(self, context):
         """Initialize the driver session, this function is called everytime a new instance of the driver is created.
@@ -34,7 +36,8 @@ class IxVMVchassisDriver(ResourceDriverInterface):
         This is a good place to load and cache the driver configuration, initiate sessions etc.
         :param InitCommandContext context: the context the command runs on
         """
-        pass
+        self._cli = get_cli(SSH_SESSION_POOL)
+        return "Finished initializing"
 
     @staticmethod
     def _get_resource_attribute_value(resource, attribute_name):
@@ -60,7 +63,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             logger.info("Waiting for controller service start...")
 
             if datetime.now() > timeout_time:
-                raise Exception("TeraVM Controller service didn't start within {} minute(s)"
+                raise Exception("IxVM Chassis service didn't start within {} minute(s)"
                                 .format(SERVICE_STARTING_TIMEOUT / 60))
             time.sleep(10)
 
@@ -76,22 +79,27 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
         with ErrorHandlingContext(logger):
 
-            vchassis_resource = TrafficGeneratorVChassisResource.from_context(context)
+            resource_config = TrafficGeneratorVChassisResource.from_context(context)
 
-            if not vchassis_resource.address or vchassis_resource.address.upper() == "NA":
+            if not resource_config.address or resource_config.address.upper() == "NA":
                 return AutoLoadDetails([], [])
 
-            # cs_api = get_api(context)
+            cs_api = get_api(context)
 
-            # api_client = IxVMChassisHTTPClient(address=vchassis_resource.address,
-            #                                    user=vchassis_resource.user,
-            #                                    password=vchassis_resource.password)  # todo: decrypt password !!!!!
+            password = cs_api.DecryptPassword(resource_config.password).Value
 
-            api_client = IxVMChassisHTTPClient(address=vchassis_resource.address,
-                                               user="admin",
-                                               password="admin")  # todo: decrypt password !!!!!
+            api_client = IxVMChassisHTTPClient(address=resource_config.address,
+                                               user=resource_config.user,
+                                               password=password)
 
             self._wait_for_service_deployment(api_client, logger)
+
+            configuration_operations = IxVMConfigurationRunner(resource_config=resource_config,
+                                                               cli=self._cli,
+                                                               cs_api=cs_api,
+                                                               logger=logger)
+
+            configuration_operations.configure_license_server(license_server_ip=resource_config.license_server)
 
             api_client.login()
 
@@ -220,7 +228,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
             for vnic_id in remap_requests:
                 new_con = copy.deepcopy(connector)
-                TeraVMVbladeDriver._update_connector(new_con, me, other, vnic_id)
+                IxVMVchassisDriver._update_connector(new_con, me, other, vnic_id)
                 connectors.append(new_con)
 
         elif resource_name in connector.target.split("/"):
@@ -231,7 +239,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
             for vnic_id in remap_requests:
                 new_con = copy.deepcopy(connector)
-                TeraVMVbladeDriver._update_connector(new_con, me, other, vnic_id)
+                IxVMVchassisDriver._update_connector(new_con, me, other, vnic_id)
                 connectors.append(new_con)
         else:
             raise Exception("Oops, a connector doesn't have required details:\n Connector source: {0}\n"
