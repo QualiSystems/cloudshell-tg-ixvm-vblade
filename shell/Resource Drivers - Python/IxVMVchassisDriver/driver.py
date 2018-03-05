@@ -18,7 +18,7 @@ from traffic.ixvm.vchassis.autoload import models
 from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
 from traffic.ixvm.vchassis.runners.configuration_runner import IxVMConfigurationRunner
 
-SSH_SESSION_POOL = 1
+
 SERVICE_STARTING_TIMEOUT = 60 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
@@ -36,7 +36,8 @@ class IxVMVchassisDriver(ResourceDriverInterface):
         This is a good place to load and cache the driver configuration, initiate sessions etc.
         :param InitCommandContext context: the context the command runs on
         """
-        self._cli = get_cli(SSH_SESSION_POOL)
+        resource_config = TrafficGeneratorVChassisResource.from_context(context)
+        self._cli = get_cli(resource_config.sessions_concurrency_limit)
         return "Finished initializing"
 
     @staticmethod
@@ -264,7 +265,7 @@ if __name__ == "__main__":
     import mock
     from cloudshell.shell.core.context import ResourceCommandContext, ResourceContextDetails, ReservationContextDetails
 
-    address = '192.168.42.191'
+    address = '192.168.42.169'
 
     user = 'admin'
     password = 'admin'
@@ -282,8 +283,7 @@ if __name__ == "__main__":
     context.resource.attributes = {}
     context.resource.attributes['User'] = user
     context.resource.attributes['Password'] = password
-    context.resource.attributes['TVM Comms Network'] = "TVM_Comms_VLAN_99"
-    context.resource.attributes['TVM MGMT Network'] = "TMV_Mgmt"
+    context.resource.attributes['License Server'] = "192.168.42.61"
     context.resource.address = address
     context.resource.app_context = mock.MagicMock(app_request_json=json.dumps(
         {

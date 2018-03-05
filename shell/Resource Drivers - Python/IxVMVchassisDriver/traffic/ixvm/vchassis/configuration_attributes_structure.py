@@ -45,6 +45,30 @@ class TrafficGeneratorVChassisResource(object):
         """
         return self.attributes.get("{}License Server".format(self.namespace_prefix), None)
 
+    @property
+    def cli_connection_type(self):
+        """
+
+        :rtype: str
+        """
+        return self.attributes.get("{}CLI Connection Type".format(self.namespace_prefix), "SSH")
+
+    @property
+    def cli_tcp_port(self):
+        """
+
+        :rtype: str
+        """
+        return self.attributes.get("{}CLI TCP Port".format(self.namespace_prefix), 22)
+
+    @property
+    def sessions_concurrency_limit(self):
+        """
+
+        :rtype: float
+        """
+        return self.attributes.get("{}Sessions Concurrency Limit".format(self.namespace_prefix), 1)
+
     @classmethod
     def from_context(cls, context, shell_name=None):
         """Create an instance of TrafficGeneratorVBladeResource from the given context

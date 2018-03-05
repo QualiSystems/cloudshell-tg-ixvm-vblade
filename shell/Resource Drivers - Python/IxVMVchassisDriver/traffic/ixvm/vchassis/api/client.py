@@ -112,9 +112,9 @@ class IxVMChassisHTTPClient(object):
         """
         ""
         try:
-            resp = self._do_get(path="platform", raise_for_status=False)
+            resp = self._do_get(path="chassis/api/v2/ixos/chassis", raise_for_status=False)
         except requests.exceptions.ConnectionError:
             return False
 
-        return resp.status_code == httplib.OK
+        return resp.status_code == httplib.UNAUTHORIZED
 
