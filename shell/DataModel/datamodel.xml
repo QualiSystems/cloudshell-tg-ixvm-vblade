@@ -76,7 +76,9 @@
                                SupportsConcurrentCommands="false">
                     <AttachedAttributes/>
                     <AttributeValues/>
-                    <ParentModels/>
+                    <ParentModels>
+                        <ParentModelName>IxVM Chassis</ParentModelName>
+                    </ParentModels>
                 </ResourceModel>
             </Models>
         </ResourceFamily>
