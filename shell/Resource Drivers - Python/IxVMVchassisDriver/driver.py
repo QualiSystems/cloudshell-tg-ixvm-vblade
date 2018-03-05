@@ -135,7 +135,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                                            name="IxVm Virtual Module {}".format(module_data["cardNumber"]),
                                            unique_id=module_id)
 
-                logger.info("Adding Module {} to the Chassis".format(module_data["portNumber"]))
+                logger.info("Adding Module {} to the Chassis".format(module_data["cardNumber"]))
                 chassis_res.add_sub_resource(module_id, module_res)
 
                 for port_res in port_resources.get(module_id, []):
