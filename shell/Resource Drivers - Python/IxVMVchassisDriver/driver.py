@@ -18,7 +18,6 @@ from traffic.ixvm.vchassis.autoload import models
 from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
 from traffic.ixvm.vchassis.runners.configuration_runner import IxVMConfigurationRunner
 
-
 SERVICE_STARTING_TIMEOUT = 60 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
@@ -86,13 +85,15 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                 return AutoLoadDetails([], [])
 
             cs_api = get_api(context)
-
             password = cs_api.DecryptPassword(resource_config.password).Value
+
+            logger.info("Initializing API client")
 
             api_client = IxVMChassisHTTPClient(address=resource_config.address,
                                                user=resource_config.user,
                                                password=password)
 
+            logger.info("Waiting for API service to be deployed")
             self._wait_for_service_deployment(api_client, logger)
 
             configuration_operations = IxVMConfigurationRunner(resource_config=resource_config,
@@ -100,8 +101,10 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                                                                cs_api=cs_api,
                                                                logger=logger)
 
+            logger.info("Executing congfigure license server operation")
             configuration_operations.configure_license_server(license_server_ip=resource_config.license_server)
 
+            logger.info("Performing API client login")
             api_client.login()
 
             # todo: clarify if there always will be only one chassis
@@ -111,6 +114,8 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             chassis_res = models.Chassis(shell_name="",
                                          name="IxVm Virtual Chassis {}".format(chassis_id),
                                          unique_id=chassis_id)
+
+            logger.info("Retrieving Chassis data from the API")
 
             port_resources = {}
             for port_data in api_client.get_ports():
@@ -122,6 +127,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                                        unique_id=port_id)
                 ports_by_module = port_resources.setdefault(parent_id, [])
                 ports_by_module.append(port_res)
+                logger.info("Found Port {} under the parent id {}".format(port_data["portNumber"], parent_id))
 
             for module_data in api_client.get_cards():
                 module_id = module_data["id"]
@@ -129,9 +135,11 @@ class IxVMVchassisDriver(ResourceDriverInterface):
                                            name="IxVm Virtual Module {}".format(module_data["cardNumber"]),
                                            unique_id=module_id)
 
+                logger.info("Adding Module {} to the Chassis".format(module_data["portNumber"]))
                 chassis_res.add_sub_resource(module_id, module_res)
 
                 for port_res in port_resources.get(module_id, []):
+                    logger.info("Adding Port {} under the module {}".format(port_res.name, module_id))
                     module_res.add_sub_resource(port_res.unique_id, port_res)
 
             return AutoloadDetailsBuilder(chassis_res).autoload_details()
@@ -260,6 +268,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
         ports = {str(idx): port for idx, port in enumerate(resource.ChildResources)
                  if port.ResourceModelName == MODEL_PORT}
         return ports
+
 
 if __name__ == "__main__":
     import mock
