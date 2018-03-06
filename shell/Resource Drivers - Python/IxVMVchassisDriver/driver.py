@@ -19,6 +19,7 @@ from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGene
 from traffic.ixvm.vchassis.runners.configuration_runner import IxVMConfigurationRunner
 
 SERVICE_STARTING_TIMEOUT = 60 * 60
+CHASSIS_STRUCTURE_APPEARANCE_TIMEOUT = 10 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
 MODEL_PORT = "IxVM Virtual Traffic Generator Port"
@@ -53,6 +54,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
     @staticmethod
     def _wait_for_service_deployment(api_client, logger):
         """
+
         :param api_client:
         :param logger:
         :return:
@@ -65,6 +67,24 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             if datetime.now() > timeout_time:
                 raise Exception("IxVM Chassis service didn't start within {} minute(s)"
                                 .format(SERVICE_STARTING_TIMEOUT / 60))
+            time.sleep(10)
+
+    @staticmethod
+    def _wait_for_chassis_structure(api_client, logger):
+        """Will wait while chassis structure appears
+
+        :param api_client:
+        :param logger:
+        :return:
+        """
+        timeout_time = datetime.now() + timedelta(seconds=CHASSIS_STRUCTURE_APPEARANCE_TIMEOUT)
+
+        while not (api_client.get_cards() and api_client.get_ports()):
+            logger.info("Waiting for chassis structure appearance...")
+
+            if datetime.now() > timeout_time:
+                raise Exception("Chassis data from IxVM Chassis service is empty and didn't appear within {}"
+                                .format(CHASSIS_STRUCTURE_APPEARANCE_TIMEOUT / 60))
             time.sleep(10)
 
     def get_inventory(self, context):
@@ -114,6 +134,9 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             chassis_res = models.Chassis(shell_name="",
                                          name="IxVm Virtual Chassis {}".format(chassis_id),
                                          unique_id=chassis_id)
+
+            logger.info("Waiting for the Chassis data")
+            self._wait_for_chassis_structure(api_client, logger)
 
             logger.info("Retrieving Chassis data from the API")
 
