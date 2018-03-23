@@ -1,9 +1,11 @@
 class TrafficGeneratorVChassisResource(object):
-    def __init__(self, address=None, family=None, shell_name=None, fullname=None, name=None, attributes=None):
+    def __init__(self, address=None, family=None, shell_type=None, shell_name=None,
+                 fullname=None, name=None, attributes=None):
         """
 
         :param str address: IP address of the resource
         :param str family: resource family
+        :param str shell_type: shell type
         :param str shell_name: shell name
         :param str fullname: full name of the resource
         :param str name: name of the resource
@@ -11,15 +13,12 @@ class TrafficGeneratorVChassisResource(object):
         """
         self.address = address
         self.family = family
+        self.shell_type = shell_type
         self.shell_name = shell_name
         self.fullname = fullname
         self.name = name
         self.attributes = attributes or {}
-
-        if shell_name:
-            self.namespace_prefix = "{}.".format(self.shell_name)
-        else:
-            self.namespace_prefix = ""
+        self.namespace_prefix = "{}.".format(self.shell_name)
 
     @property
     def user(self):
@@ -43,7 +42,7 @@ class TrafficGeneratorVChassisResource(object):
 
         :rtype: string
         """
-        return self.attributes.get("{}License Server".format(self.namespace_prefix), None)
+        return self.attributes.get("{}License Server".format(self.shell_type), None)
 
     @property
     def cli_connection_type(self):
@@ -70,15 +69,17 @@ class TrafficGeneratorVChassisResource(object):
         return self.attributes.get("{}Sessions Concurrency Limit".format(self.namespace_prefix), 1)
 
     @classmethod
-    def from_context(cls, context, shell_name=None):
+    def from_context(cls, context, shell_type=None, shell_name=None):
         """Create an instance of TrafficGeneratorVBladeResource from the given context
 
         :param cloudshell.shell.core.driver_context.ResourceCommandContext context:
-        :param str shell_name: shell Name
-        :rtype: TrafficGeneratorVBladeResource
+        :param str shell_type: shell type
+        :param str shell_name: shell name
+        :rtype: TrafficGeneratorVChassisResource
         """
         return cls(address=context.resource.address,
                    family=context.resource.family,
+                   shell_type=shell_type,
                    shell_name=shell_name,
                    fullname=context.resource.fullname,
                    attributes=dict(context.resource.attributes),

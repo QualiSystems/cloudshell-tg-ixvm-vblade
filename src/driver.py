@@ -12,7 +12,6 @@ from cloudshell.devices.driver_helper import get_cli
 from cloudshell.devices.driver_helper import get_logger_with_thread_id
 from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
-
 from traffic.ixvm.vchassis.api.client import IxVMChassisHTTPClient
 from traffic.ixvm.vchassis.autoload import models
 from traffic.ixvm.vchassis.configuration_attributes_structure import TrafficGeneratorVChassisResource
@@ -22,10 +21,13 @@ SERVICE_STARTING_TIMEOUT = 60 * 60
 CHASSIS_STRUCTURE_APPEARANCE_TIMEOUT = 10 * 60
 ATTR_REQUESTED_SOURCE_VNIC = "Requested Source vNIC Name"
 ATTR_REQUESTED_TARGET_VNIC = "Requested Target vNIC Name"
-MODEL_PORT = "IxVM Virtual Traffic Generator Port"
+SHELL_TYPE = "CS_VirtualTrafficGeneratorChassis"
+SHELL_NAME = "IxVM Virtual Traffic Chassis 2G"
+MODULE_MODEL = "{}.VirtualTrafficGeneratorModule".format(SHELL_NAME)
+PORT_MODEL = "{}.VirtualTrafficGeneratorPort".format(SHELL_NAME)
 
 
-class IxVMVchassisDriver(ResourceDriverInterface):
+class IxVMVirtualChassisDriver(ResourceDriverInterface):
     def __init__(self):
         """Constructor must be without arguments, it is created with reflection at run time"""
         self._cli = None
@@ -36,20 +38,11 @@ class IxVMVchassisDriver(ResourceDriverInterface):
         This is a good place to load and cache the driver configuration, initiate sessions etc.
         :param InitCommandContext context: the context the command runs on
         """
-        resource_config = TrafficGeneratorVChassisResource.from_context(context)
+        resource_config = TrafficGeneratorVChassisResource.from_context(context,
+                                                                        shell_type=SHELL_TYPE,
+                                                                        shell_name=SHELL_NAME)
         self._cli = get_cli(resource_config.sessions_concurrency_limit)
         return "Finished initializing"
-
-    @staticmethod
-    def _get_resource_attribute_value(resource, attribute_name):
-        """
-
-        :param resource cloudshell.api.cloudshell_api.ResourceInfo:
-        :param str attribute_name:
-        """
-        for attribute in resource.ResourceAttributes:
-            if attribute.Name == attribute_name:
-                return attribute.Value
 
     @staticmethod
     def _wait_for_service_deployment(api_client, logger):
@@ -99,7 +92,9 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
         with ErrorHandlingContext(logger):
 
-            resource_config = TrafficGeneratorVChassisResource.from_context(context)
+            resource_config = TrafficGeneratorVChassisResource.from_context(context,
+                                                                            shell_type=SHELL_TYPE,
+                                                                            shell_name=SHELL_NAME)
 
             if not resource_config.address or resource_config.address.upper() == "NA":
                 return AutoLoadDetails([], [])
@@ -127,43 +122,48 @@ class IxVMVchassisDriver(ResourceDriverInterface):
             logger.info("Performing API client login")
             api_client.login()
 
-            # todo: clarify if there always will be only one chassis
-            chassis_data = api_client.get_chassis()[0]
-            chassis_id = chassis_data["id"]
-
-            chassis_res = models.Chassis(shell_name="",
-                                         name="IxVm Virtual Chassis {}".format(chassis_id),
-                                         unique_id=chassis_id)
-
             logger.info("Waiting for the Chassis data")
             self._wait_for_chassis_structure(api_client, logger)
 
             logger.info("Retrieving Chassis data from the API")
+            chassis_data = api_client.get_chassis()[0]
+            chassis_id = chassis_data["id"]
 
-            port_resources = {}
+            chassis_res = models.Chassis(shell_type=SHELL_TYPE,
+                                         shell_name=resource_config.shell_name,
+                                         name="IxVm Virtual Chassis {}".format(chassis_id),
+                                         unique_id=chassis_id)
+
+            ports_data = {}
             for port_data in api_client.get_ports():
-                port_id = port_data["id"]
-
                 parent_id = port_data["parentId"]
-                port_res = models.Port(shell_name="",
-                                       name="Port {}".format(port_data["portNumber"]),
-                                       unique_id=port_id)
-                ports_by_module = port_resources.setdefault(parent_id, [])
-                ports_by_module.append(port_res)
-                logger.info("Found Port {} under the parent id {}".format(port_data["portNumber"], parent_id))
+                port_number = port_data["portNumber"]
+
+                ports_by_module = ports_data.setdefault(parent_id, [])
+                ports_by_module.append(port_data)
+                logger.info("Found Port {} under the parent id {}".format(port_number, parent_id))
 
             for module_data in api_client.get_cards():
                 module_id = module_data["id"]
-                module_res = models.Module(shell_name="",
-                                           name="IxVm Virtual Module {}".format(module_data["cardNumber"]),
+                module_number = module_data["cardNumber"]
+
+                module_res = models.Module(shell_name=resource_config.shell_name,
+                                           name="IxVm Virtual Module {}".format(module_number),
                                            unique_id=module_id)
 
-                logger.info("Adding Module {} to the Chassis".format(module_data["cardNumber"]))
-                chassis_res.add_sub_resource(module_id, module_res)
+                logger.info("Adding Module {} to the Chassis".format(module_number))
+                chassis_res.add_sub_resource(module_number, module_res)
 
-                for port_res in port_resources.get(module_id, []):
-                    logger.info("Adding Port {} under the module {}".format(port_res.name, module_id))
-                    module_res.add_sub_resource(port_res.unique_id, port_res)
+                for port_data in ports_data.get(module_id, []):
+                    port_id = port_data["id"]
+                    port_number = port_data["portNumber"]
+
+                    port_res = models.Port(shell_name=resource_config.shell_name,
+                                           name="Port {}".format(port_number),
+                                           unique_id=port_id)
+
+                    logger.info("Adding Port {} under the module {}".format(port_number, module_id))
+                    module_res.add_sub_resource(port_number, port_res)
 
             return AutoloadDetailsBuilder(chassis_res).autoload_details()
 
@@ -260,7 +260,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
             for vnic_id in remap_requests:
                 new_con = copy.deepcopy(connector)
-                IxVMVchassisDriver._update_connector(new_con, me, other, vnic_id)
+                IxVMVirtualChassisDriver._update_connector(new_con, me, other, vnic_id)
                 connectors.append(new_con)
 
         elif resource_name in connector.target.split("/"):
@@ -271,7 +271,7 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
             for vnic_id in remap_requests:
                 new_con = copy.deepcopy(connector)
-                IxVMVchassisDriver._update_connector(new_con, me, other, vnic_id)
+                IxVMVirtualChassisDriver._update_connector(new_con, me, other, vnic_id)
                 connectors.append(new_con)
         else:
             raise Exception("Oops, a connector doesn't have required details:\n Connector source: {0}\n"
@@ -288,8 +288,13 @@ class IxVMVchassisDriver(ResourceDriverInterface):
 
     @staticmethod
     def _get_ports(resource):
-        ports = {str(idx): port for idx, port in enumerate(resource.ChildResources)
-                 if port.ResourceModelName == MODEL_PORT}
+        ports = {}
+        idx = 2
+        for module in (module for module in resource.ChildResources if module.ResourceModelName == MODULE_MODEL):
+            for port in (port for port in module.ChildResources if port.ResourceModelName == PORT_MODEL):
+                ports[str(idx)] = port
+                idx += 1
+
         return ports
 
 
@@ -313,9 +318,9 @@ if __name__ == "__main__":
     context.reservation = ReservationContextDetails()
     context.reservation.reservation_id = '0cc17f8c-75ba-495f-aeb5-df5f0f9a0e97'
     context.resource.attributes = {}
-    context.resource.attributes['User'] = user
-    context.resource.attributes['Password'] = password
-    context.resource.attributes['License Server'] = "192.168.42.61"
+    context.resource.attributes['{}.User'.format(IxVMVirtualChassisDriver.SHELL_NAME)] = user
+    context.resource.attributes['{}.Password'.format(IxVMVirtualChassisDriver.SHELL_NAME)] = password
+    context.resource.attributes['{}.License Server'.format(IxVMVirtualChassisDriver.SHELL_NAME)] = "192.168.42.61"
     context.resource.address = address
     context.resource.app_context = mock.MagicMock(app_request_json=json.dumps(
         {
@@ -327,10 +332,14 @@ if __name__ == "__main__":
     context.connectivity = mock.MagicMock()
     context.connectivity.server_address = "192.168.85.23"
 
-    dr = IxVMVchassisDriver()
+    dr = IxVMVirtualChassisDriver()
     dr.initialize(context)
 
-    result = dr.get_inventory(context)
+    with mock.patch('__main__.get_api') as get_api:
+        get_api.return_value = type('api', (object,), {
+            'DecryptPassword': lambda self, pw: type('Password', (object,), {'Value': pw})()})()
 
-    for resource in result.resources:
-        print resource.__dict__
+        result = dr.get_inventory(context)
+
+        for res in result.resources:
+            print res.__dict__
