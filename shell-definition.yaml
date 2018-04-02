@@ -18,6 +18,16 @@ node_types:
     capabilities:
       auto_discovery_capability:
         type: cloudshell.capabilities.AutoDiscovery
+        properties:
+          User:
+            type: string
+            description: User for the Chassis REST API
+          Password:
+            type: string
+            description: Password for the Chassis REST API
+          License Server:
+            type: string
+            description: License sevrver address
     artifacts:
       icon:
         file: shell-icon.png
