@@ -183,6 +183,13 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
         logger.info("Connect child resources command started")
 
         with ErrorHandlingContext(logger):
+            resource_config = TrafficGeneratorVChassisResource.from_context(context,
+                                                                            shell_type=SHELL_TYPE,
+                                                                            shell_name=SHELL_NAME)
+
+            if not resource_config.address or resource_config.address.upper() == "NA":
+                return
+
             resource_name = context.resource.fullname
             reservation_id = context.reservation.reservation_id
             connectors = context.connectors
