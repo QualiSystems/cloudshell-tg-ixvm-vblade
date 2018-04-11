@@ -154,14 +154,17 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
                 logger.info("Adding Module {} to the Chassis".format(module_number))
                 chassis_res.add_sub_resource(module_number, module_res)
 
-                for port_data in ports_data.get(module_id, []):
+                ports_data = ports_data.get(module_id, [])
+                ports_data.sort(key=lambda x: int(x["portNumber"]))
+
+                for nw_adapter_number, port_data in enumerate(ports_data, start=2):  # first nw adapter port is MGMT
                     port_id = port_data["id"]
                     port_number = port_data["portNumber"]
 
                     port_res = models.IxVMPort(shell_name=resource_config.shell_name,
                                                name="Port {}".format(port_number),
                                                unique_id=port_id)
-
+                    port_res.requested_vnic_name = nw_adapter_number
                     logger.info("Adding Port {} under the module {}".format(port_number, module_id))
                     module_res.add_sub_resource(port_number, port_res)
 
