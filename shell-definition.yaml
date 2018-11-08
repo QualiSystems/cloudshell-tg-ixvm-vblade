@@ -27,7 +27,7 @@ node_types:
             description: Password for the Chassis REST API
           License Server:
             type: string
-            description: License sevrver address
+            description: License server address
     artifacts:
       icon:
         file: shell-icon.png
