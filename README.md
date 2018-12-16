@@ -193,7 +193,6 @@ This section explains how to create an App template for the IxVM Chassis to enab
 6. In the **App Resource** tab, select the **IxVM Virtual Traffic Chassis 2G** shell. Specify the **User**, **Password**, and **License Server** of the shell.
 
 	**Note:** Contact your Admin to obtain the correct credentials to set on the deployed App shell. They are generally provided  along with the VM image.
-
 	<br>![](https://github.com/QualiSystems/IxVM-Deployment-App-Chassis-Shell-2G/blob/master/ixvm_deployment_app_2g_app_resource.PNG)
 
 7. Click **Done**.
