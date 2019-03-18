@@ -31,6 +31,8 @@ The **IxVM Deployment App 2G** shell provides you with connectivity and manageme
 
 For more information on the **IxVM Traffic Chassis**, see the official **IxVM** product documentation.
 
+**Note:** The shell supports only **VMone**, which combines the Virtual Chassis and Virtual Load Module into a single VM.
+
 ### Standard version
 **IxVM Chassis Deployment App 2G** shell is based on the CloudShell Virtual Traffic Generator Standard 1.0.0.
 
