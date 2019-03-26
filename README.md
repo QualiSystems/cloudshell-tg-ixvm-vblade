@@ -261,8 +261,6 @@ To connect with Quali users and experts from around the world, ask questions and
 
 # Release Notes 
 
-For release updates, see the shell's [GitHub releases page](https://github.com/QualiSystems/IxVM-Deployment-App-Chassis-Shell-2G/releases)
-
 ### What's New
 
 For release updates, see the shell's [GitHub releases page](https://github.com/QualiSystems/IxVM-Deployment-App-Chassis-Shell-2G/releases).
