@@ -2,9 +2,9 @@
 
 # **IxVM Chassis Deployment App 2G Shell**  
 
-Release date: May 2018
+Release date: March 2019
 
-Shell version: 1.0.0
+Shell version: 1.0.1
 
 Document version: 1.0.0
 
@@ -260,6 +260,8 @@ To suggest an idea for the product, see [Quali's Idea box](https://community.qua
 To connect with Quali users and experts from around the world, ask questions and discuss issues, see [Quali's Community forums](https://community.quali.com/forums). 
 
 # Release Notes 
+
+For release updates, see the shell's [GitHub releases page](https://github.com/QualiSystems/IxVM-Deployment-App-Chassis-Shell-2G/releases)
 
 ### What's New
 
