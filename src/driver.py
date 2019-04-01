@@ -88,7 +88,7 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
         :rtype: AutoLoadDetails
         """
         logger = get_logger_with_thread_id(context)
-        logger.info("Autoload")
+        logger.info("Autoload command started")
 
         with ErrorHandlingContext(logger):
 
@@ -97,6 +97,7 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
                                                                             shell_name=SHELL_NAME)
 
             if not resource_config.address or resource_config.address.upper() == "NA":
+                logger.info("Skip 'Autoload' command for now...")
                 return AutoLoadDetails([], [])
 
             cs_api = get_api(context)
@@ -177,13 +178,14 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
 
         pass
 
-    def connect_child_resources(self, context):
+    def connect_child_resources(self, context, request=None):
         """
         :type context: cloudshell.shell.core.driver_context.ResourceCommandContext
         :rtype: str
         """
         logger = get_logger_with_thread_id(context)
-        logger.info("Connect child resources command started")
+        logger.info("Connect Child Resources command started")
+        logger.info("Receive request {}".format(request))
 
         with ErrorHandlingContext(logger):
             resource_config = TrafficGeneratorVChassisResource.from_context(context,
@@ -191,6 +193,7 @@ class IxVMVirtualChassisDriver(ResourceDriverInterface, VirtualTrafficGeneratorR
                                                                             shell_name=SHELL_NAME)
 
             if not resource_config.address or resource_config.address.upper() == "NA":
+                logger.info("Skip 'Connect Child Resources' command for now...")
                 return
 
             resource_name = context.resource.fullname
