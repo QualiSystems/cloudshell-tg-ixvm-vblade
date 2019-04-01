@@ -1,7 +1,11 @@
 <Driver Description="Describe the purpose of your CloudShell shell" MainClass="driver.IxVMVirtualChassisDriver" Name="IxVMVirtualChassisDriver" Version="1.0.0">
     <Layout>
         <Category Name="Hidden Commands">
-            <Command Description="" Name="connect_child_resources" DisplayName="Connect Child Resources" Tags="" />
+            <Command Description="" Name="connect_child_resources" DisplayName="Connect Child Resources" Tags="" >
+                <Parameters>
+                  <Parameter DisplayName="Request" Name="request" Type="String"  DefaultValue="" Description=""/>
+                </Parameters>
+            </Command>
         </Category>
     </Layout>
 </Driver>
